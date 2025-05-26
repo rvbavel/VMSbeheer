@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VMSbeheer - Login of Registratie</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">Welkom bij VMSbeheer</h2>
+
+    <div id="auth-toggle" class="mb-4 text-center">
+      <button onclick="toonLogin()" class="text-blue-600 font-medium mr-4">Inloggen</button>
+      <button onclick="toonRegistratie()" class="text-gray-600 hover:text-blue-600">Registreren</button>
+    </div>
+
+    <form id="login-form" class="space-y-4">
+      <input id="login-email" type="email" placeholder="E-mail" class="w-full p-2 border rounded">
+      <input id="login-password" type="password" placeholder="Wachtwoord" class="w-full p-2 border rounded">
+      <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Inloggen</button>
+    </form>
+
+    <form id="register-form" class="space-y-4 hidden">
+      <input id="reg-voornaam" type="text" placeholder="Voornaam" class="w-full p-2 border rounded">
+      <input id="reg-email" type="email" placeholder="E-mail" class="w-full p-2 border rounded">
+      <input id="reg-password" type="password" placeholder="Wachtwoord" class="w-full p-2 border rounded">
+      <button type="submit" class="w-full bg-green-600 text-white p-2 rounded">Registreren</button>
+    </form>
+
+    <p id="status" class="mt-4 text-sm text-center text-red-600"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlSdlvogevmDnAfaUSi9KQ5XpCJVsWnwM",
+      authDomain: "vmsbeheer-f8017.firebaseapp.com",
+      projectId: "vmsbeheer-f8017",
+      storageBucket: "vmsbeheer-f8017.firebasestorage.app",
+      messagingSenderId: "908371588711",
+      appId: "1:908371588711:web:dce34fedb49805675f06c2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const docRef = doc(db, "gebruikers", cred.user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().goedkeuring === true) {
+          window.location.href = "vms.html";
+        } else {
+          document.getElementById("status").innerText = "Je account is nog niet goedgekeurd.";
+        }
+      } catch (err) {
+        document.getElementById("status").innerText = err.message;
+      }
+    });
+
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+      const voornaam = document.getElementById("reg-voornaam").value;
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "gebruikers", cred.user.uid), {
+          email,
+          voornaam,
+          goedkeuring: false,
+          rol: "medewerker",
+          aangemaaktOp: new Date()
+        });
+        document.getElementById("status").innerText = "Registratie gelukt. Wacht op goedkeuring.";
+        document.getElementById("register-form").reset();
+      } catch (err) {
+        document.getElementById("status").innerText = err.message;
+      }
+    });
+
+    window.toonLogin = function () {
+      document.getElementById("login-form").classList.remove("hidden");
+      document.getElementById("register-form").classList.add("hidden");
+    }
+    window.toonRegistratie = function () {
+      document.getElementById("login-form").classList.add("hidden");
+      document.getElementById("register-form").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
