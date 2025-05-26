@@ -58,7 +58,7 @@
         const cred = await signInWithEmailAndPassword(auth, email, password);
         const docRef = doc(db, "gebruikers", cred.user.uid);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().goedgekeurd === true) {
+        if (docSnap.exists() && docSnap.data().goedgekeurd === true)
           window.location.href = "vms.html";
         } else {
           document.getElementById("status").innerText = "Je account is nog niet goedgekeurd.";
